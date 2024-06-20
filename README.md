@@ -1,0 +1,2 @@
+# Template
+Simple_EC2_CloudFormationTemplate
