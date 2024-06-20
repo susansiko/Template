@@ -1,0 +1,58 @@
+#simple ec2 website creating
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: This CloudFormation Template creates a Web Server on an EC2 instance inside Java, GitHub, Docker
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: key.pem #Must be one of the existing EC2 KeyPairs
+
+Resources:
+  WebServerSecurityGroup:
+    #this named for my ec2 instance security group
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH for WebServer
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  WebServer:
+    #this named for my ec2 instance
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0bb84b8ffd87024d8 (example)
+      InstanceType: t3.micro (example)
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub WebServer # of ${AWS::StackName}
+      UserData: !Base64
+        Fn::Sub: |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install git -y
+          sudo yum install docker -y
+          sudo yum install java -y
+          systemctl start docker
+          systemctl enable docker
+          sudo usermod -a -G docker WebServer
+
+Mappings:
+  RegionMap:
+    us-east-1:
+
+Outputs:
+  WebsiteURL:
+    Description: WebServer DNS Name
+    Value: !GetAtt WebServer.PublicDnsName
